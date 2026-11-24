@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>오늘의 밥상</title>
+<style>
+  :root {
+    --bg: #f6ead8;          /* 한지 */
+    --bg-dot: #ead8bd;
+    --ink: #4a2e1f;         /* 먹빛 갈색 */
+    --accent: #b5442f;      /* 고추장 붉은색 */
+    --table-1: #a8643a;     /* 소반 나무결 */
+    --table-2: #8a4b28;
+    --table-rim: #6b3518;
+    --card: #fffaf1;
+    --card-edge: #e9d3b4;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    padding: 32px 16px;
+    background-color: var(--bg);
+    background-image: radial-gradient(var(--bg-dot) 1px, transparent 1px);
+    background-size: 18px 18px;
+    color: var(--ink);
+    font-family: "Gowun Batang", "Nanum Myeongjo", "Batang", "AppleMyungjo", serif;
+  }
+
+  header { text-align: center; }
+
+  h1 {
+    font-size: clamp(2rem, 6vw, 2.8rem);
+    letter-spacing: 0.15em;
+  }
+
+  h1::after {
+    content: "";
+    display: block;
+    width: 48px;
+    height: 3px;
+    margin: 12px auto 0;
+    border-radius: 2px;
+    background: var(--accent);
+  }
+
+  .date {
+    margin-top: 10px;
+    font-size: 0.95rem;
+    opacity: 0.75;
+  }
+
+  /* 둥근 소반 */
+  .table {
+    --size: min(560px, 90vw);
+    position: relative;
+    width: var(--size);
+    height: var(--size);
+    border-radius: 50%;
+    background:
+      repeating-radial-gradient(circle at 50% 50%,
+        transparent 0 14px, rgba(0,0,0,0.04) 14px 16px),
+      radial-gradient(circle at 40% 35%, var(--table-1), var(--table-2));
+    border: 14px solid var(--table-rim);
+    box-shadow:
+      0 24px 40px rgba(74, 46, 31, 0.35),
+      inset 0 0 30px rgba(0, 0, 0, 0.25);
+  }
+
+  /* 반찬 목록: 자바스크립트가 상 위에 둥글게 배치합니다 */
+  #banchan {
+    list-style: none;
+    position: absolute;
+    inset: 0;
+  }
+
+  #banchan li {
+    --card-w: 120px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: var(--card-w);
+    padding: 16px 8px 12px;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: var(--card);
+    border: 2px solid var(--card-edge);
+    border-radius: 18px;
+    box-shadow: 0 6px 14px rgba(60, 30, 10, 0.3);
+    font-size: 1.05rem;
+    font-weight: 700;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: default;
+  }
+
+  #banchan li:hover {
+    transform: translate(-50%, -50%) translateY(-6px);
+    box-shadow: 0 12px 22px rgba(60, 30, 10, 0.35);
+  }
+
+  #banchan .emoji {
+    font-size: calc(var(--card-w) * 0.38);
+    line-height: 1;
+  }
+
+  footer {
+    font-size: 0.85rem;
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>오늘의 밥상</h1>
+  <p class="date" id="date"></p>
+</header>
+
+<div class="table">
+  <!--
+    ▼ 반찬 목록 ▼
+    한 줄에 하나씩 "이모지 + 띄어쓰기 + 이름" 형식으로 추가하세요.
+    예) <li>🥚 계란말이</li>
+        <li>🐟 고등어구이</li>
+        <li>🥬 시금치나물</li>
+  -->
+  <ul id="banchan">
+    <li>🍚 밥</li>
+    <li>🍲 국</li>
+    <li>🌶️ 김치</li>
+  </ul>
+</div>
+
+<footer>잘 먹겠습니다 🙏</footer>
+
+<script>
+  // 오늘 날짜
+  document.getElementById("date").textContent =
+    new Date().toLocaleDateString("ko-KR", {
+      year: "numeric", month: "long", day: "numeric", weekday: "long"
+    });
+
+  const items = Array.from(document.querySelectorAll("#banchan li"));
+
+  // "🍚 밥" → 이모지와 이름으로 나눠 카드 모양 만들기
+  items.forEach(li => {
+    const text = li.textContent.trim();
+    const space = text.indexOf(" ");
+    const emoji = space > 0 ? text.slice(0, space) : "🍽️";
+    const name  = space > 0 ? text.slice(space + 1).trim() : text;
+    li.innerHTML = "";
+    const e = document.createElement("span");
+    e.className = "emoji";
+    e.textContent = emoji;
+    const n = document.createElement("span");
+    n.textContent = name;
+    li.append(e, n);
+  });
+
+  // 상 위에 카드를 둥글게 배치 (반찬이 많아지면 카드가 작아지고 두 겹으로)
+  function layout() {
+    const table = document.querySelector(".table");
+    const size = table.clientWidth;
+    const count = items.length;
+    if (!count) return;
+
+    const outerCount = count > 8 ? Math.ceil(count * 0.62) : count;
+    const innerCount = count - outerCount;
+
+    let cardW = size * (count <= 3 ? 0.26 : count <= 6 ? 0.22 : count <= 10 ? 0.18 : 0.15);
+    cardW = Math.max(64, Math.min(cardW, 140));
+
+    const place = (list, radius, offset) => {
+      list.forEach((li, i) => {
+        li.style.setProperty("--card-w", cardW + "px");
+        if (list.length === 1 && radius === 0) {
+          li.style.left = "50%";
+          li.style.top = "50%";
+          return;
+        }
+        const angle = offset + (i / list.length) * Math.PI * 2;
+        li.style.left = (size / 2 + Math.cos(angle) * radius) + "px";
+        li.style.top  = (size / 2 + Math.sin(angle) * radius) + "px";
+      });
+    };
+
+    const outerR = count === 1 ? 0 : size * (count <= 3 ? 0.24 : 0.32);
+    place(items.slice(0, outerCount), outerR, -Math.PI / 2);
+    if (innerCount) {
+      place(items.slice(outerCount), innerCount === 1 ? 0 : size * 0.13, -Math.PI / 2 + 0.4);
+    }
+  }
+
+  layout();
+  window.addEventListener("resize", layout);
+</script>
+</body>
+</html>
